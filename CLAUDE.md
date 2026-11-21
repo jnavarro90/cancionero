@@ -21,7 +21,7 @@ Solo hay especificación y prototipo. Todavía no hay `package.json` ni código 
 - **No servir nada fuera de `public/` y `shared/`.** Comprobar la ruta final con `path.resolve`.
 - **Acordes siempre en notación inglesa dentro del archivo.** La notación ES/EN es solo de pantalla.
 - **Escritura atómica** (`.tmp` + `rename`) y control de conflictos con `If-Unmodified-Since` (409).
-- **Interfaz en español.** No usar `alert`, `confirm` ni `prompt`: los avisos van en la píldora de `SPEC.md` §7.10 y los diálogos son propios.
+- **Interfaz en español.** No usar `alert`, `confirm` ni `prompt`: los avisos van en la píldora de `SPEC.md` §7.8 y los diálogos son propios.
 - **Letras con derechos de autor fuera del repo.** `canciones/` está en `.gitignore` salvo el ejemplo de dominio público.
 
 ## Convenciones
