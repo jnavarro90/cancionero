@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editar canción · Cancionero</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenedor">
+    <header class="cabecera-editor">
+      <a class="enlace-volver" href="/">← Canciones</a>
+      <input class="titulo-editable" id="titulo" type="text" aria-label="Título de la canción" maxlength="120">
+      <span class="estado-guardado" id="estado" role="status" aria-live="polite">Cargando…</span>
+    </header>
+
+    <p class="ayuda" id="ayuda">Pasa el ratón por una palabra y pulsa <strong>+</strong> para poner el acorde encima.</p>
+
+    <div class="aviso-conflicto" id="conflicto" hidden>
+      <p>Esta canción se cambió fuera de aquí.</p>
+      <div class="fila-botones">
+        <button class="boton" type="button" id="cargar-disco">Cargar la del disco</button>
+        <button class="boton" type="button" id="guardar-mia">Guardar la mía</button>
+      </div>
+    </div>
+
+    <div class="barra" id="barra">
+      <div class="tono" role="group" aria-label="Tono">
+        <span class="etiqueta">Tono</span>
+        <button type="button" id="tono-bajar" aria-label="Bajar un semitono">−</button>
+        <output id="tono">—</output>
+        <button type="button" id="tono-subir" aria-label="Subir un semitono">+</button>
+      </div>
+      <button class="boton" type="button" id="btn-copiar" title="Copia los acordes de la primera estrofa a las demás, en la misma palabra">Copiar acordes a todas las estrofas</button>
+      <button class="boton" type="button" id="btn-deshacer">Deshacer</button>
+      <button class="boton" type="button" id="btn-editar">Editar letra</button>
+      <button class="boton principal" type="button" id="btn-listo" hidden>Listo</button>
+      <button class="boton principal" type="button" id="btn-pdf" disabled>Descargar PDF</button>
+    </div>
+
+    <section class="hoja" id="hoja" aria-label="Hoja de la canción"></section>
+
+    <section id="vista-letra" hidden>
+      <p class="aviso-letra" id="aviso-letra"></p>
+      <textarea class="letra" id="letra" spellcheck="false" aria-label="Letra de la canción"></textarea>
+    </section>
+
+    <p class="pie-editor" id="pie"></p>
+  </main>
+
+  <script src="/vendor/jspdf.umd.min.js"></script>
+  <script type="module" src="/js/editor.js"></script>
+</body>
+</html>

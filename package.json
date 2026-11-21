@@ -1,0 +1,16 @@
+{
+  "name": "cancionero",
+  "version": "1.1.0",
+  "description": "Web local para poner acordes sobre letras y exportarlas a PDF",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "UNLICENSED"
+}

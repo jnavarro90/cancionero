@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cancionero</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="contenedor">
+    <header class="cabecera-biblioteca">
+      <h1>Cancionero</h1>
+      <button class="boton principal" id="nueva" type="button">Nueva canción</button>
+    </header>
+
+    <label class="visualmente-oculto" for="buscar">Buscar canción por título</label>
+    <input class="buscador" id="buscar" type="search" placeholder="Buscar por título…" autocomplete="off">
+
+    <ul class="lista" id="lista" hidden></ul>
+
+    <div class="vacio" id="vacio" hidden>
+      <p>Aún no hay canciones.</p>
+      <div class="acciones-vacio">
+        <button class="boton principal" id="nueva-vacio" type="button">Nueva canción</button>
+      </div>
+    </div>
+
+    <p class="pie-ruta" id="ruta"></p>
+  </main>
+
+  <dialog id="dlg-nueva">
+    <form method="dialog" id="form-nueva">
+      <h2>Nueva canción</h2>
+      <label for="titulo-nueva">Título</label>
+      <input id="titulo-nueva" name="titulo" required maxlength="120" autocomplete="off">
+      <div class="fila-botones">
+        <button class="boton" type="button" data-cerrar>Cancelar</button>
+        <button class="boton principal" type="submit">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-borrar">
+    <h2>¿Borrar esta canción?</h2>
+    <p>Se moverá a la papelera de la carpeta de canciones.</p>
+    <div class="fila-botones">
+      <button class="boton" type="button" data-cerrar>Cancelar</button>
+      <button class="boton peligro" type="button" id="confirmar-borrar">Borrar</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="/js/biblioteca.js"></script>
+</body>
+</html>

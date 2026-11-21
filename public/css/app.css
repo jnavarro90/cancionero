@@ -1,0 +1,233 @@
+/* Estilos. Ver SPEC.md §8: cuaderno de cuadros, tinta azul y acordes en rojo. */
+
+@font-face {
+  font-family: 'Kalam';
+  src: url('/fonts/kalam-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kalam';
+  src: url('/fonts/kalam-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #e8ecf4;
+  --paper: #ffffff;
+  --grid: #dde5f2;
+  --ink: #1a2766;
+  --soft: #5b6694;
+  --red: #cf2236;
+  --redsoft: #fde8ea;
+  --edge: #c9d2e6;
+  --on-red: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0f1d;
+    --paper: #131a2e;
+    --grid: #1f2842;
+    --ink: #e2e7ff;
+    --soft: #9aa4cf;
+    --red: #ff7b87;
+    --redsoft: #3a1d27;
+    --edge: #2c3758;
+    --on-red: #0b0f1d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0f1d;
+  --paper: #131a2e;
+  --grid: #1f2842;
+  --ink: #e2e7ff;
+  --soft: #9aa4cf;
+  --red: #ff7b87;
+  --redsoft: #3a1d27;
+  --edge: #2c3758;
+  --on-red: #0b0f1d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  min-height: 100vh;
+}
+
+h1, h2 { font-family: 'Kalam', cursive; font-weight: 700; margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.contenedor { max-width: 1040px; margin: 0 auto; padding: 16px; }
+
+.boton {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--edge);
+  border-radius: 9px;
+  background: var(--paper);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.boton:hover { border-color: var(--ink); }
+.boton.principal { background: var(--red); color: var(--on-red); border-color: var(--red); font-weight: 700; }
+.boton.peligro { color: var(--red); }
+.boton[disabled] { opacity: .45; cursor: default; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--red) 55%, transparent); outline-offset: 2px; }
+
+.visualmente-oculto {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+}
+
+/* ---------- Biblioteca ---------- */
+.cabecera-biblioteca { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin: 8px 0 16px; }
+.cabecera-biblioteca h1 { font-size: clamp(28px, 4.5vw, 44px); color: var(--red); }
+.buscador { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--edge); border-radius: 9px; background: var(--paper); margin-bottom: 12px; }
+.lista { list-style: none; padding: 0; margin: 0; background: var(--paper); border: 1px solid var(--edge); border-radius: 12px; overflow: hidden; }
+.fila { display: flex; align-items: center; border-top: 1px solid var(--edge); }
+.fila:first-child { border-top: 0; }
+.fila a { flex: 1; display: block; padding: 12px 14px; text-decoration: none; color: inherit; min-width: 0; }
+.fila a:hover { background: var(--redsoft); }
+.fila .titulo { font-family: 'Kalam', cursive; font-weight: 700; font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fila .meta { color: var(--soft); font-size: 14px; }
+.menu-btn { min-width: 44px; min-height: 44px; border: 0; background: transparent; cursor: pointer; font-size: 20px; }
+.vacio { padding: 32px 16px; text-align: center; color: var(--soft); background: var(--paper); border: 1px dashed var(--edge); border-radius: 12px; }
+.acciones-vacio { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.pie-ruta { color: var(--soft); font-size: 13px; margin-top: 16px; word-break: break-all; }
+.menu-flotante { position: absolute; z-index: 20; background: var(--paper); border: 1px solid var(--edge); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / .18); display: flex; flex-direction: column; min-width: 180px; }
+.menu-flotante button { min-height: 44px; padding: 0 14px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.menu-flotante button:hover { background: var(--redsoft); }
+
+dialog { border: 1px solid var(--edge); border-radius: 14px; background: var(--paper); color: var(--ink); padding: 20px; max-width: min(420px, calc(100vw - 24px)); }
+dialog::backdrop { background: rgb(0 0 0 / .35); }
+dialog h2 { margin-bottom: 8px; font-size: 24px; }
+dialog p { color: var(--soft); margin: 0 0 12px; }
+dialog input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--edge); border-radius: 9px; background: var(--bg); }
+.fila-botones { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+
+/* ---------- Editor: cabecera y barra ---------- */
+.cabecera-editor { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 8px 0; }
+.enlace-volver { text-decoration: none; color: var(--soft); min-height: 44px; display: inline-flex; align-items: center; }
+.titulo-editable {
+  flex: 1; min-width: 180px; font-family: 'Kalam', cursive; font-weight: 700;
+  font-size: clamp(28px, 4.5vw, 44px); color: var(--red);
+  border: 1px solid transparent; border-radius: 8px; background: transparent; padding: 0 6px;
+}
+.titulo-editable:hover, .titulo-editable:focus { border-color: var(--edge); background: var(--paper); outline: none; }
+.estado-guardado { font-size: 14px; color: var(--soft); min-width: 140px; text-align: right; }
+.estado-guardado.error { color: var(--red); font-weight: 700; }
+.ayuda { color: var(--soft); margin: 4px 0 10px; }
+.barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.tono { display: inline-flex; align-items: center; gap: 4px; background: var(--paper); border: 1px solid var(--edge); border-radius: 9px; padding: 0 4px; }
+.tono output { min-width: 72px; text-align: center; font-family: 'Kalam', cursive; font-weight: 700; font-size: 19px; color: var(--red); }
+.tono button { min-width: 44px; min-height: 44px; border: 0; background: transparent; cursor: pointer; font-size: 20px; }
+.tono .etiqueta { font-size: 14px; color: var(--soft); padding: 0 4px; }
+.aviso-conflicto { background: var(--redsoft); border: 1px solid var(--red); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+
+/* ---------- Hoja ---------- */
+.hoja {
+  position: relative;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  border: 1px solid var(--edge);
+  border-radius: 4px 14px 14px 4px;
+  padding: 16px clamp(14px, 3vw, 32px) 24px clamp(30px, 4.5vw, 54px);
+  min-height: 300px;
+}
+.hoja::before {
+  content: ''; position: absolute; top: 0; bottom: 0;
+  left: clamp(20px, 3vw, 38px); width: 1px; background: color-mix(in srgb, var(--red) 35%, transparent);
+}
+.estrofa { margin-bottom: 18px; }
+.etiqueta-estrofa { font-size: 13px; color: var(--soft); border-bottom: 1px solid var(--edge); margin-bottom: 6px; }
+.linea { display: flex; flex-wrap: wrap; align-items: flex-end; min-height: 1.35em; }
+.palabra {
+  position: relative; display: inline-flex; flex-direction: column; align-items: flex-start;
+  padding: 0 3px; margin-right: .3em; border-radius: 6px; cursor: text; outline: none;
+}
+.palabra .acorde {
+  display: block; min-height: 1.35em; font-family: 'Kalam', cursive; font-weight: 700;
+  font-size: 19px; color: var(--red); white-space: nowrap; line-height: 1.35em;
+}
+.palabra .texto { font-size: clamp(18px, 2.2vw, 21px); line-height: 1.5; white-space: pre; }
+.palabra:hover, .palabra:focus-visible { background: var(--redsoft); }
+.palabra .mas {
+  position: absolute; left: 3px; top: 0; width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px dashed var(--red); color: var(--red); display: grid; place-items: center;
+  font-size: 15px; line-height: 1; opacity: 0; transform: scale(.8);
+  transition: opacity 120ms, transform 120ms; pointer-events: none;
+}
+.palabra:hover .mas, .palabra:focus-visible .mas { opacity: 1; transform: scale(1); }
+.palabra.con-acorde:hover .mas { opacity: 0; }
+.palabra.atenuada .mas { opacity: .35; transform: scale(1); }
+@media (hover: none) { .palabra .mas { opacity: .28; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .palabra .mas { transition: none; } }
+
+/* ---------- Editor de letra ---------- */
+.letra {
+  width: 100%; min-height: 360px; resize: vertical; padding: 12px 16px;
+  border: 1px solid var(--edge); border-radius: 12px;
+  background: var(--paper); font-size: 18px; line-height: 1.7; white-space: pre-wrap;
+}
+.aviso-letra { font-size: 14px; color: var(--soft); margin-bottom: 6px; }
+
+/* ---------- Popover de acorde ---------- */
+.popover {
+  position: absolute; z-index: 30; width: min(340px, 100vw - 24px);
+  background: var(--paper); border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / .2); padding: 12px;
+}
+.popover h2 { font-size: 20px; margin-bottom: 8px; }
+.sugerencias { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+.sugerencias button {
+  position: relative; min-height: 44px; border: 1px solid var(--edge); border-radius: 9px;
+  background: var(--paper); cursor: pointer; font-family: 'Kalam', cursive; font-weight: 700; font-size: 17px; color: var(--red);
+}
+.sugerencias button:first-child { border: 2px solid var(--red); }
+.sugerencias button .num { position: absolute; top: 2px; left: 4px; font-size: 10px; color: var(--soft); font-family: 'Atkinson Hyperlegible', sans-serif; font-weight: 400; }
+.motivo { font-size: 14px; color: var(--soft); margin: 4px 0 8px; }
+.fila-otro { display: flex; gap: 6px; }
+.fila-otro input { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--edge); border-radius: 9px; background: var(--bg); }
+.popover .quitar { width: 100%; margin-top: 8px; }
+.error-acorde { color: var(--red); font-size: 14px; margin-top: 4px; }
+
+/* ---------- Pie y avisos ---------- */
+.pie-editor { color: var(--soft); font-size: 14px; margin-top: 12px; }
+.aviso-pildora {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  background: #1a2766; color: #ffffff; padding: 10px 18px; border-radius: 999px;
+  font-size: 15px; z-index: 50; max-width: calc(100vw - 32px); text-align: center;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .aviso-pildora { background: #e2e7ff; color: #0b0f1d; }
+}
+:root[data-theme="dark"] .aviso-pildora { background: #e2e7ff; color: #0b0f1d; }
+
+@media (max-width: 480px) {
+  .hoja { padding: 12px 10px 18px 28px; }
+  .barra .boton { flex: 1 1 auto; }
+}
