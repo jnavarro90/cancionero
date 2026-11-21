@@ -37,7 +37,7 @@ La app arranca el servidor y abre la web en su propia ventana de Chrome (si no t
 ### Cosas que importan
 
 - **Si mueves la carpeta `cancionero`**, vuelve a ejecutar `sh scripts/crear-lanzador.sh`. La app recuerda dónde está la carpeta y la ruta de Node.
-- **Si cambias de versión de Node** (por ejemplo con nvm), vuelve a ejecutar `sh scripts/crear-lanzador.sh` para que la app use la nueva.
+- **Node:** la app busca Node 20 o superior al arrancar (también con nvm), así que no hace falta volver a crearla si cambias de versión. Si no lo encuentra, te lo dice en un aviso.
 - El servidor sigue en marcha al cerrar la ventana, para que la siguiente vez arranque al instante. Para pararlo: `pkill -f server/index.js` en la Terminal.
 - Los registros del servidor están en `~/Library/Logs/cancionero.log`.
 - Si el Dock muestra el icono antiguo, ejecuta `killall Dock`.

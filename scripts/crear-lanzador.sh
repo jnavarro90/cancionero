@@ -1,14 +1,13 @@
 #!/bin/sh
 # Crea ~/Applications/Cancionero.app: doble clic para arrancar la web, sin Terminal.
-# Se ejecuta una vez. Si cambias de versión de Node, vuelve a ejecutarlo.
+# Se ejecuta una vez en cada equipo (la app guarda la ruta de la carpeta del proyecto).
 set -e
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
-NODE="$(command -v node)"
 DESTINO="$HOME/Applications/Cancionero.app"
 TMP="$(mktemp -t lanzador).applescript"
 
 cat > "$TMP" <<EOF
-do shell script quoted form of "$RAIZ/scripts/lanzar.sh" & " " & quoted form of "$NODE"
+do shell script quoted form of "$RAIZ/scripts/lanzar.sh"
 EOF
 
 mkdir -p "$HOME/Applications"
