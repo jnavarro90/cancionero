@@ -1,0 +1,5 @@
+canciones/*
+!canciones/ejemplo-noche-de-paz.chordpro
+canciones/.papelera/
+node_modules/
+*.tmp

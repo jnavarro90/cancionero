@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cancionero con acordes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday: a music notebook for a family or a parish choir
+   IDEA the squared spiral notebook where chords are pencilled in red over the lyric in blue ink
+   PICTURE the sheet itself: grid paper, words in ink, chords floating above, a + appears where you hover
+   COLOUR paper white with blue grid, ballpoint blue ink, red pen for chords; night = dark blue paper
+   TYPE Kalam (handwritten chords) + Atkinson Hyperlegible (lyrics)
+   LAYOUT toolbar row on top, the sheet full width beneath; on phone toolbar wraps, sheet below */
+:root{color-scheme:light dark;--bg:light-dark(#e8ecf4,#0b0f1d);--paper:light-dark(#ffffff,#131a2e);--grid:light-dark(#dde5f2,#1f2842);--ink:light-dark(#1a2766,#e2e7ff);--soft:light-dark(#5b6694,#9aa4cf);--red:light-dark(#cf2236,#ff7b87);--redsoft:light-dark(#fde8ea,#3a1d27);--edge:light-dark(#c9d2e6,#2c3758)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:1040px;margin:0 auto;padding:clamp(16px,3vw,36px) max(16px,4vw) 48px}
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;justify-content:space-between;margin-bottom:14px}
+#title{font:700 clamp(28px,4.5vw,44px)/1.05 Kalam,cursive;color:var(--ink);background:none;border:0;border-bottom:2px dashed transparent;padding:0;width:min(100%,18ch);letter-spacing:-.01em}
+#title:hover,#title:focus{border-bottom-color:var(--edge);outline:none}
+.hint{margin:4px 0 0;color:var(--soft);font-size:15px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--edge);border-radius:12px;padding:8px;margin-bottom:14px}
+.grp{display:flex;align-items:center;gap:4px}
+.sep{width:1px;align-self:stretch;background:var(--edge);margin:0 4px}
+.bar label{font-size:14px;color:var(--soft);margin:0 4px 0 6px}
+button,select,input{font:inherit;font-size:16px;color:var(--ink)}
+.btn{min-height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--edge);background:var(--paper);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+#rep{white-space:normal;text-align:start;padding-block:6px;max-width:100%}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.w:focus-visible{outline:3px solid color-mix(in srgb,var(--red) 55%,transparent);outline-offset:2px}
+.btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.main{background:var(--red);border-color:var(--red);color:#fff}
+.seg{display:flex;border:1px solid var(--edge);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:38px}
+select{min-height:40px;border-radius:9px;border:1px solid var(--edge);background:var(--paper);padding:0 8px}
+#tr{min-width:3.2ch;text-align:center;font-variant-numeric:tabular-nums;color:var(--soft);font-size:15px}
+.sheet{position:relative;background:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;border:1px solid var(--edge);border-radius:4px 14px 14px 4px;padding:16px clamp(14px,3vw,32px) 24px clamp(30px,4.5vw,54px);min-height:320px;box-shadow:0 1px 0 var(--edge)}
+.sheet::before{content:"";position:absolute;top:0;bottom:0;left:clamp(20px,3vw,38px);width:2px;background:color-mix(in srgb,var(--red) 35%,transparent)}
+.line{display:flex;flex-wrap:wrap;column-gap:.55em;row-gap:2px;margin-bottom:6px}
+.gap{height:26px}
+.w{display:inline-flex;flex-direction:column;align-items:flex-start;cursor:pointer;border-radius:6px;padding:0 2px;position:relative;outline:none}
+.c{font:700 19px/1.25 Kalam,cursive;color:var(--red);min-height:1.35em;white-space:nowrap;display:block;min-width:1ch}
+.t{font-size:clamp(18px,2.2vw,21px);line-height:1.35;white-space:nowrap}
+.w:not(.has) .c::after{content:"+";display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font:700 16px/1 "Atkinson Hyperlegible",sans-serif;color:var(--red);border:1.5px dashed var(--red);opacity:0;transform:scale(.7);transition:opacity .12s,transform .12s}
+.w:hover .c::after,.w:focus-visible .c::after,.w.sel .c::after{opacity:1;transform:none}
+.w:hover,.w.sel{background:var(--redsoft)}
+@media(hover:none){.w:not(.has) .c::after{opacity:.28;transform:scale(.8)}}
+.w.sug .c::after{opacity:.55!important;transform:none!important;border-style:dotted}
+.edlab{position:absolute;left:1px;top:1px;bottom:1px;width:96px;overflow:hidden;pointer-events:none;border-radius:4px 0 0 4px;border-right:2px solid color-mix(in srgb,var(--red) 30%,transparent)}
+.edlab b{position:absolute;left:12px;font:700 15px/1 Kalam,cursive;color:var(--red);white-space:nowrap}
+.mir{position:absolute;visibility:hidden;top:0;left:0;white-space:pre-wrap;overflow-wrap:break-word;font:18px/1.7 "Atkinson Hyperlegible",sans-serif;border:0}
+@media(max-width:600px){.lyr{padding-left:84px!important}.edlab{width:76px}.edlab b{left:8px;font-size:14px}}
+.lyrhint{background:var(--redsoft);border:1px solid color-mix(in srgb,var(--red) 35%,transparent);border-radius:12px;padding:6px 12px;margin-bottom:8px;font-size:15px}
+.lyrhint[hidden]{display:none}
+.lyrhint span{color:var(--soft)}
+.stz{font-size:13px;color:var(--soft);margin:0 0 2px;display:flex;align-items:center;gap:8px}
+.stz::after{content:"";flex:1;height:1px;background:var(--edge);max-width:120px}
+.ed{position:relative}
+.ed[hidden]{display:none}
+.lyr{display:block;padding-left:104px!important;width:100%;min-height:420px;border:1px solid var(--edge);border-radius:4px 14px 14px 4px;background:var(--paper);padding:20px clamp(16px,4vw,40px);font:18px/1.7 "Atkinson Hyperlegible",sans-serif;resize:vertical}
+.pop{position:absolute;z-index:10;width:min(340px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--edge);border-radius:14px;box-shadow:0 10px 28px rgba(10,20,60,.18);padding:12px}
+.pop[hidden]{display:none}
+.pop h3{margin:0 0 8px;font-size:15px;font-weight:400;color:var(--soft)}
+.pop h3 b{color:var(--ink)}
+.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.chip{min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--paper);font:700 18px/1 Kalam,cursive;color:var(--red);cursor:pointer;position:relative}
+.chip:hover,.chip:focus-visible{border-color:var(--red);background:var(--redsoft);outline:none}
+.chip.top{border:2px solid var(--red)}
+.chip small{position:absolute;top:3px;left:6px;font:400 11px/1 "Atkinson Hyperlegible",sans-serif;color:var(--soft)}
+.vars{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--edge)}
+.vars span{font-size:13px;color:var(--soft);width:100%}
+.var{min-height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--edge);background:var(--paper);font:700 17px/1 Kalam,cursive;color:var(--red);cursor:pointer}
+.var.on{background:var(--red);color:#fff;border-color:var(--red)}
+.var:hover,.var:focus-visible{border-color:var(--red);outline:none}
+.selbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--ink);color:var(--paper);border-radius:12px;padding:8px 8px 8px 14px;margin-bottom:14px;position:sticky;top:8px;z-index:5}
+.selbar[hidden]{display:none}
+.selbar p{margin:0 auto 0 0;font-size:15px}
+.selbar .btn{background:transparent;color:var(--paper);border-color:color-mix(in srgb,var(--paper) 40%,transparent)}
+.selbar .btn.main{background:var(--red);border-color:var(--red);color:#fff}
+.selbar .btn:disabled{opacity:.45;cursor:default}
+.picking .w{cursor:cell}
+.picking{user-select:none;-webkit-user-select:none;touch-action:pan-y}
+.picking .w:not(.has) .c::after{display:none}
+.w.pick{background:color-mix(in srgb,var(--red) 22%,transparent);box-shadow:inset 0 0 0 2px var(--red)}
+.w.pick .c{text-decoration:line-through;text-decoration-thickness:2px}
+.why{font-size:13px;color:var(--soft);margin:6px 0 10px}
+.own{display:flex;gap:6px}
+.own input{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--paper);padding:0 10px}
+.own input.bad{border-color:var(--red)}
+.rm{margin-top:8px;width:100%}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:10px;color:var(--soft);font-size:14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+@media(max-width:600px){.sep{display:none}.bar{gap:6px}.sheet{padding:12px 10px 18px 28px}.sheet::before{left:18px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <input id="title" aria-label="Título de la canción" value="Noche de paz">
+      <p class="hint">Pasa el ratón por una palabra y pulsa <b style="color:var(--red)">+</b> para poner el acorde encima.</p>
+    </div>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="Herramientas">
+    <div class="grp"><label for="key">Tono</label><select id="key"></select></div>
+    <div class="seg" role="group" aria-label="Notación"><button class="btn" data-n="es">LAm</button><button class="btn" data-n="en">Am</button></div>
+    <div class="grp"><button class="btn" id="dn" aria-label="Bajar medio tono">−½</button><span id="tr">0</span><button class="btn" id="up" aria-label="Subir medio tono">+½</button></div>
+    <span class="sep"></span>
+    <button class="btn" id="rep" title="Copia los acordes de la 1.ª estrofa a las demás, en la misma línea y la misma palabra">Copiar acordes a todas</button>
+    <button class="btn" id="edit">Editar letra</button>
+    <button class="btn" id="pickBtn">Seleccionar para borrar</button>
+    <button class="btn" id="undo" aria-label="Deshacer">Deshacer</button>
+    <button class="btn" id="copy">Copiar</button>
+    <button class="btn main" id="pdf">Descargar PDF</button>
+    <button class="btn" id="new">Nueva</button>
+  </div>
+
+  <div class="selbar" id="selbar" hidden role="toolbar" aria-label="Selección">
+    <p id="selTxt">Pulsa o arrastra sobre los acordes que quieras borrar. Mayús + clic marca un tramo.</p>
+    <button class="btn" id="pickAll">Marcar todos</button>
+    <button class="btn" id="pickNone">Desmarcar</button>
+    <button class="btn main" id="pickDel" disabled>Borrar</button>
+    <button class="btn" id="pickEnd">Terminar</button>
+  </div>
+  <div id="sheet" class="sheet" aria-label="Hoja de la canción"></div>
+  <div class="lyrhint" id="lyrHint" hidden><b>Línea en blanco entre estrofas.</b> <span id="stzCount"></span></div>
+  <div class="ed" id="ed" hidden><div class="edlab" id="edlab" aria-hidden="true"></div><div class="mir" id="mir" aria-hidden="true"></div>
+  <textarea id="lyr" class="lyr" aria-label="Letra" placeholder="Escribe o pega aquí la letra. Deja una línea en blanco entre estrofas."></textarea></div>
+  <div class="foot"><span id="info"></span><span>Ejemplo: estrofa de dominio público (trad. F. Fliedner). Pulsa «Nueva» para escribir la tuya.</span></div>
+</div>
+
+<div class="pop" id="pop" hidden role="dialog" aria-label="Elegir acorde">
+  <h3 id="ph"></h3>
+  <div class="vars" id="vars" hidden></div>
+  <div class="chips" id="chips"></div>
+  <p class="why" id="why"></p>
+  <form class="own" id="own"><input id="ownIn" placeholder="Otro: LAM, SOL7, Fa#m…" autocomplete="off" aria-label="Escribir acorde"><button class="btn main">Poner</button></form>
+  <button class="btn rm" id="rm" hidden>Quitar acorde</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+{
+const ES=['DO','DO#','RE','MIb','MI','FA','FA#','SOL','LAb','LA','SIb','SI'];
+const EN=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const ESB={do:0,re:2,mi:4,fa:5,sol:7,la:9,si:11},ENB={c:0,d:2,e:4,f:5,g:7,a:9,b:11};
+const DIA={major:[[0,''],[5,''],[7,''],[9,'m'],[7,'7'],[2,'m'],[4,'m'],[0,'7']],minor:[[0,'m'],[7,'7'],[5,'m'],[8,''],[3,''],[10,''],[7,'m'],[2,'m7']]};
+const NEXT={major:{'0':['7','5','9m'],'5':['0','7','2m'],'7':['0','9m'],'77':['0','9m'],'9m':['5','2m','4m'],'2m':['77','7'],'4m':['9m','5']},
+            minor:{'0m':['77','5m','8'],'5m':['0m','77'],'77':['0m','8'],'7m':['0m','8'],'8':['5m','77','3'],'3':['8','10'],'10':['3','0m']}};
+const SAMPLE='Noche de paz, noche de amor,\ntodo duerme en derredor.\nEntre los astros que esparcen su luz,\nbella anunciando al niñito Jesús,\nbrilla la estrella de paz,\nbrilla la estrella de paz.';
+const C=(r,q)=>({r,q});
+const fresh=()=>({title:'Noche de paz',text:SAMPLE,key:{r:9,m:'minor'},nota:'es',tr:0,
+  chords:{'0:0':C(9,'m'),'0:3':C(4,'7'),'1:0':C(9,'m'),'1:3':C(4,'7'),'2:0':C(2,'m'),'2:4':C(9,'m'),'3:0':C(2,'m'),'3:3':C(9,'m'),'4:0':C(4,'7'),'4:4':C(9,'m'),'5:0':C(4,'7'),'5:4':C(9,'m')}});
+let st;try{st=JSON.parse(localStorage.getItem('cancionero-v1'))}catch(e){}
+if(!st||typeof st.text!=='string')st=fresh();
+const hist=[];
+const $=id=>document.getElementById(id);
+const sheet=$('sheet'),pop=$('pop'),lyr=$('lyr'),ed=$('ed');
+const esc=s=>s.replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const name=c=>(st.nota==='es'?ES:EN)[c.r]+(st.nota==='es'&&c.q===''?'M':c.q);
+const rel=c=>((c.r-st.key.r+12)%12)+c.q;
+const save=()=>{try{localStorage.setItem('cancionero-v1',JSON.stringify(st))}catch(e){}};
+const push=()=>{hist.push(JSON.stringify(st));if(hist.length>80)hist.shift()};
+const lines=()=>st.text.split('\n').map(l=>l.trim()?l.trim().split(/\s+/):null);
+const order=k=>{const[a,b]=k.split(':').map(Number);return a*1000+b};
+let sel=null,picking=false,picked=new Set(),lastPick=null;
+const VARS=['','m','7','m7','maj7','sus4'];
+
+function parse(s){
+  s=s.trim().replace(/\s+/g,'');if(!s)return null;
+  let m=s.match(/^(sol|do|re|mi|fa|la|si)([#b]?)(.*)$/i),r;
+  if(m)r=ESB[m[1].toLowerCase()];
+  else{m=s.match(/^([a-g])([#b]?)(.*)$/i);if(!m)return null;r=ENB[m[1].toLowerCase()]}
+  r=(r+(m[2]==='#'?1:m[2]==='b'?-1:0)+12)%12;
+  let q=m[3];
+  if(q==='M'||/^(maj|mayor|may)$/i.test(q))q='';
+  else if(/^(min|menor|-)$/i.test(q))q='m';
+  else if(/^M7$/.test(q))q='maj7';
+  else if(/^m/.test(q))q='m'+q.slice(1).toLowerCase();
+  else q=q.replace(/^maj/i,'maj');
+  if(q.length>8||!/^[a-z0-9#+()\/º°ø-]*$/i.test(q))return null;
+  return C(r,q);
+}
+
+function suggest(k){
+  const ord=order(k),keys=Object.keys(st.chords).sort((a,b)=>order(a)-order(b));
+  const before=keys.filter(x=>order(x)<ord),prev=before.length?st.chords[before[before.length-1]]:null;
+  const out=[],why={},add=(c,w)=>{const n=c.r+'|'+c.q;if(!out.some(o=>o.r+'|'+o.q===n)){out.push(c);why[n]=w}};
+  if(prev){
+    const cnt={};keys.forEach((x,i)=>{if(i&&name(st.chords[keys[i-1]])===name(prev)&&x!==k){const c=st.chords[x],n=c.r+'|'+c.q;cnt[n]=(cnt[n]||0)+1}});
+    Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([n])=>{const[r,q]=n.split('|');add(C(+r,q),'sigue a '+name(prev)+' en tu canción')});
+    (NEXT[st.key.m][rel(prev)]||[]).forEach(t=>{const m=t.match(/^(\d+)(.*)$/);add(C((+m[1]+st.key.r)%12,m[2]),'suele ir después de '+name(prev))});
+  }
+  const freq={};keys.forEach(x=>{const c=st.chords[x],n=c.r+'|'+c.q;freq[n]=(freq[n]||0)+1});
+  Object.entries(freq).sort((a,b)=>b[1]-a[1]).forEach(([n])=>{const[r,q]=n.split('|');add(C(+r,q),'ya lo usas')});
+  DIA[st.key.m].forEach(([d,q])=>add(C((d+st.key.r)%12,q),'del tono'));
+  return{list:out.slice(0,8),why};
+}
+
+function render(){
+  $('title').value=st.title;
+  $('tr').textContent=(st.tr>0?'+':'')+st.tr;
+  document.querySelectorAll('[data-n]').forEach(b=>b.classList.toggle('on',b.dataset.n===st.nota));
+  $('key').innerHTML=[0,1,2,3,4,5,6,7,8,9,10,11].flatMap(r=>['major','minor'].map(m=>{const v=r+'|'+m,l=name(C(r,m==='minor'?'m':''));return`<option value="${v}"${r===st.key.r&&m===st.key.m?' selected':''}>${l}</option>`})).join('');
+  let sn=0;
+  sheet.innerHTML=lines().map((ws,l,A)=>ws?`${l===0||!A[l-1]?`<div class="stz">Estrofa ${++sn}</div>`:''}<div class="line">${ws.map((w,i)=>{const k=l+':'+i,c=st.chords[k];return`<span class="w${c?' has':''}${sel===k?' sel':''}${picked.has(k)?' pick':''}" tabindex="0" data-k="${k}"><span class="c">${c?esc(name(c)):''}</span><span class="t">${esc(w)}</span></span>`}).join('')}</div>`:'<div class="gap"></div>').join('');
+  sheet.classList.toggle('picking',picking);
+  $('selbar').hidden=!picking;$('pickBtn').classList.toggle('on',picking);
+  $('pickDel').disabled=!picked.size;
+  $('pickDel').textContent=picked.size?`Borrar ${picked.size} acorde${picked.size>1?'s':''}`:'Borrar';
+  const n=Object.keys(st.chords).length;
+  $('info').textContent=n?`${n} acorde${n>1?'s':''} · tono ${name(C(st.key.r,st.key.m==='minor'?'m':''))}`:'Aún no hay acordes';
+  save();
+}
+
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1800)}
+
+function open(el){
+  sel=el.dataset.k;render();
+  const w=sheet.querySelector(`[data-k="${sel}"]`),word=w.querySelector('.t').textContent;
+  const has=st.chords[sel],{list,why}=suggest(sel);
+  $('ph').innerHTML=`Acorde sobre <b>«${esc(word)}»</b>`;
+  const root=has?has.r:(list[0]?list[0].r:st.key.r),N=(st.nota==='es'?ES:EN)[root];
+  $('vars').hidden=false;
+  $('vars').innerHTML=`<span>Variantes de ${N}</span>`+VARS.map(q=>`<button class="var${has&&has.r===root&&has.q===q?' on':''}" data-r="${root}" data-q="${q}" title="${q===''?'Mayor':q==='m'?'Menor':q}">${esc(name(C(root,q)))}</button>`).join('');
+  $('chips').innerHTML=list.map((c,i)=>`<button class="chip${i===0?' top':''}" data-r="${c.r}" data-q="${esc(c.q)}"><small>${i+1}</small>${esc(name(c))}</button>`).join('');
+  $('why').textContent=list.length?`Sugerido: ${name(list[0])}, ${why[list[0].r+'|'+list[0].q]}. Teclas 1–8 para elegir.`:'';
+  $('rm').hidden=!has;$('ownIn').value=has?name(has):'';$('ownIn').classList.remove('bad');
+  pop.hidden=false;
+  const r=w.getBoundingClientRect(),pw=pop.offsetWidth;
+  pop.style.left=Math.max(12,Math.min(r.left+scrollX,scrollX+innerWidth-pw-12))+'px';
+  pop.style.top=(r.bottom+scrollY+8)+'px';
+  (pop.querySelector('.chip')||$('ownIn')).focus();
+}
+function close(){if(pop.hidden)return;pop.hidden=true;const k=sel;sel=null;render();const w=sheet.querySelector(`[data-k="${k}"]`);if(w)w.focus()}
+function setChord(c){push();if(c)st.chords[sel]=c;else delete st.chords[sel];
+  const ks=Object.keys(lines().flatMap((ws,l)=>ws?ws.map((_,i)=>l+':'+i):[]).reduce((o,k)=>(o[k]=1,o),{}));
+  const nx=ks[ks.indexOf(sel)+1];close();
+  if(nx&&c){const w=sheet.querySelector(`[data-k="${nx}"]`);if(w){w.classList.add('sug');w.focus()}}}
+
+const allKeys=()=>[...sheet.querySelectorAll('.w')].map(w=>w.dataset.k);
+let anchor=null,drag=null;
+function pickRange(a,b){const ks=allKeys();let i=ks.indexOf(a),j=ks.indexOf(b);if(i<0)i=j;
+  ks.slice(Math.min(i,j),Math.max(i,j)+1).forEach(x=>{if(st.chords[x])picked.add(x)})}
+function refresh(k){render();const w=sheet.querySelector(`[data-k="${k}"]`);if(w)w.focus({preventScroll:true})}
+function togglePick(k,range){
+  if(range&&lastPick)pickRange(lastPick,k);
+  else if(st.chords[k])picked.has(k)?picked.delete(k):picked.add(k);
+  else{toast('Esa palabra no tiene acorde');return}
+  lastPick=k;refresh(k);
+}
+function setPicking(on){picking=on;picked.clear();lastPick=null;close();render()}
+sheet.addEventListener('mousedown',e=>{if(e.shiftKey)e.preventDefault()});
+sheet.addEventListener('pointerdown',e=>{const w=e.target.closest('.w');if(!w)return;const k=w.dataset.k;
+  if(e.shiftKey){e.preventDefault();
+    if(!picking){const from=anchor;setPicking(true);lastPick=from&&st.chords[from]?from:null}
+    if(lastPick)pickRange(lastPick,k);else if(st.chords[k])picked.add(k);
+    lastPick=k;refresh(k);drag='skip';return}
+  if(!picking||e.button>0)return;
+  drag={add:!picked.has(k),start:k,base:new Set(picked)};
+  if(st.chords[k]){drag.add?picked.add(k):picked.delete(k);lastPick=k;refresh(k)}
+  else if(e.pointerType!=='mouse'){drag=null}});
+sheet.addEventListener('pointerover',e=>{if(!drag||drag==='skip'||!(e.buttons&1))return;const w=e.target.closest('.w');if(!w)return;
+  const ks=allKeys();let i=ks.indexOf(drag.start),j=ks.indexOf(w.dataset.k);
+  picked=new Set(drag.base);
+  ks.slice(Math.min(i,j),Math.max(i,j)+1).forEach(x=>{if(st.chords[x])drag.add?picked.add(x):picked.delete(x)});
+  lastPick=w.dataset.k;render()});
+document.addEventListener('pointerup',()=>{setTimeout(()=>{drag=null},0)});
+sheet.addEventListener('click',e=>{const w=e.target.closest('.w');if(!w)return;
+  if(picking){if(drag===null&&!st.chords[w.dataset.k])toast('Esa palabra no tiene acorde');return}
+  if(e.shiftKey)return;
+  anchor=w.dataset.k;open(w)});
+sheet.addEventListener('focusin',e=>{const w=e.target.closest('.w');if(w&&!picking)anchor=w.dataset.k});
+$('pickBtn').addEventListener('click',()=>setPicking(!picking));
+$('pickEnd').addEventListener('click',()=>setPicking(false));
+$('pickAll').addEventListener('click',()=>{Object.keys(st.chords).forEach(k=>picked.add(k));render()});
+$('pickNone').addEventListener('click',()=>{picked.clear();render()});
+$('pickDel').addEventListener('click',()=>{if(!picked.size)return;push();const n=picked.size;
+  picked.forEach(k=>delete st.chords[k]);picked.clear();render();toast(`${n} acorde${n>1?'s':''} borrado${n>1?'s':''} · puedes deshacer`)});
+$('vars').addEventListener('click',e=>{const b=e.target.closest('.var');if(b)setChord(C(+b.dataset.r,b.dataset.q))});
+sheet.addEventListener('keydown',e=>{const w=e.target.closest('.w');if(!w)return;
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();picking?togglePick(w.dataset.k,e.shiftKey):open(w)}
+  if((e.key==='Backspace'||e.key==='Delete')&&picking&&picked.size){e.preventDefault();$('pickDel').click();return}
+  if(e.key==='Backspace'||e.key==='Delete'){if(st.chords[w.dataset.k]){push();delete st.chords[w.dataset.k];render();sheet.querySelector(`[data-k="${w.dataset.k}"]`).focus()}}
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const all=[...sheet.querySelectorAll('.w')],i=all.indexOf(w)+(e.key==='ArrowRight'?1:-1);if(all[i])all[i].focus()}});
+sheet.addEventListener('focusout',e=>{const w=e.target.closest('.w');if(w)w.classList.remove('sug')});
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)setChord(C(+b.dataset.r,b.dataset.q))});
+$('own').addEventListener('submit',e=>{e.preventDefault();const c=parse($('ownIn').value);if(!c){$('ownIn').classList.add('bad');toast('No reconozco ese acorde');return}setChord(c)});
+$('rm').addEventListener('click',()=>setChord(null));
+pop.addEventListener('keydown',e=>{if(e.target.id==='ownIn')return;const n=+e.key;if(n>=1&&n<=8){const b=$('chips').children[n-1];if(b){e.preventDefault();b.click()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!pop.hidden)close();else if(picking)setPicking(false)}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&ed.hidden&&e.target.id!=='title'&&e.target.id!=='ownIn'){e.preventDefault();$('undo').click()}});
+document.addEventListener('pointerdown',e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.closest('.w'))close()});
+
+$('title').addEventListener('input',e=>{st.title=e.target.value;save()});
+document.querySelectorAll('[data-n]').forEach(b=>b.addEventListener('click',()=>{st.nota=b.dataset.n;render()}));
+$('key').addEventListener('change',e=>{const[r,m]=e.target.value.split('|');push();st.key={r:+r,m};render()});
+const trans=n=>{push();for(const k in st.chords)st.chords[k].r=(st.chords[k].r+n+12)%12;st.key.r=(st.key.r+n+12)%12;st.tr+=n;render()};
+$('up').addEventListener('click',()=>trans(1));$('dn').addEventListener('click',()=>trans(-1));
+$('undo').addEventListener('click',()=>{const s=hist.pop();if(!s){toast('Nada que deshacer');return}st=JSON.parse(s);picked.clear();close();render()});
+
+$('rep').addEventListener('click',()=>{
+  const L=lines(),stz=[];let cur=null;
+  L.forEach((ws,l)=>{if(ws){if(!cur){cur=[];stz.push(cur)}cur.push(l)}else cur=null});
+  const src=stz.find(s=>s.some(l=>Object.keys(st.chords).some(k=>+k.split(':')[0]===l)));
+  if(!src||stz.length<2){toast(stz.length<2?'Solo hay una estrofa. En «Editar letra», deja una línea en blanco entre estrofas':'Pon primero acordes en la 1.ª estrofa');return}
+  push();let n=0;
+  stz.filter(s=>s!==src).forEach(s=>s.forEach((l,j)=>{const sl=src[j];if(sl===undefined)return;
+    for(const k in st.chords){const[a,b]=k.split(':').map(Number);if(a!==sl)continue;
+      const tk=l+':'+Math.min(b,L[l].length-1);if(!st.chords[tk]){st.chords[tk]={...st.chords[k]};n++}}}));
+  render();toast(n?`${n} acordes copiados`:'Las demás estrofas ya tienen acordes');
+});
+
+$('edit').addEventListener('click',()=>{
+  if(ed.hidden){if(picking)setPicking(false);close();lyr.value=st.text;ed.hidden=false;sheet.hidden=true;$('lyrHint').hidden=false;countStz();$('edit').textContent='Listo';$('edit').classList.add('main');lyr.focus()}
+  else{push();st.text=lyr.value.replace(/\r/g,'');const L=lines();
+    for(const k in st.chords){const[a,b]=k.split(':').map(Number);if(!L[a]||b>=L[a].length)delete st.chords[k]}
+    ed.hidden=true;sheet.hidden=false;$('lyrHint').hidden=true;$('edit').textContent='Editar letra';$('edit').classList.remove('main');render()}
+});
+function countStz(){requestAnimationFrame(labels);const n=lyr.value.split(/\n\s*\n/).filter(x=>x.trim()).length;
+  $('stzCount').textContent=n?`${n} estrofa${n>1?'s':''}${n===1&&lyr.value.trim().split('\n').length>8?' · ¿falta alguna línea en blanco?':''}`:''}
+function labels(){
+  const cs=getComputedStyle(lyr),mir=$('mir'),lab=$('edlab');
+  mir.style.width=lyr.clientWidth+'px';mir.style.padding=cs.padding;
+  const L=lyr.value.split('\n');
+  mir.innerHTML=L.map(l=>`<div>${esc(l)||'\u200b'}</div>`).join('');
+  const lh=parseFloat(cs.lineHeight)||30,divs=mir.children;let n=0,h='';
+  L.forEach((l,i)=>{if(l.trim()&&(i===0||!L[i-1].trim())){const t=divs[i].offsetTop-lyr.scrollTop+(lh-15)/2;h+=`<b style="top:${t}px">Estrofa ${++n}</b>`}});
+  lab.innerHTML=h;
+}
+const roEd=new ResizeObserver(()=>{if(!ed.hidden)labels()});roEd.observe(lyr);
+lyr.addEventListener('scroll',labels);
+lyr.addEventListener('input',()=>{countStz();labels()});
+$('new').addEventListener('click',()=>{push();st={...st,title:'Canción nueva',text:'',chords:{},tr:0};render();$('edit').click();toast('Pega tu letra, con una línea en blanco entre estrofas, y pulsa «Listo»')});
+$('copy').addEventListener('click',async()=>{
+  const out=st.title+'\n\n'+lines().map((ws,l)=>ws?ws.map((w,i)=>{const c=st.chords[l+':'+i];return(c?'['+name(c)+']':'')+w}).join(' '):'').join('\n');
+  try{await navigator.clipboard.writeText(out);toast('Copiado con los acordes entre corchetes')}catch(e){toast('No se pudo copiar')}
+});
+
+function buildPdf(){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'pt',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const ML=86,MR=64,MT=64,MB=72,maxW=W-ML-MR;
+  const RED=[190,30,48],INK=[28,28,34],GREY=[140,140,150],RULE=[225,205,208];
+  const LY=14,CH=11,chH=15,lyH=19,lnGap=6,stGap=22,gap=5.5;
+  const font=(f,st,sz,col)=>{doc.setFont(f,st);doc.setFontSize(sz);doc.setTextColor(...col)};
+  const tw=(t,f,st,sz)=>{doc.setFont(f,st);doc.setFontSize(sz);return doc.getTextWidth(t)};
+  const star=(cx,cy,r)=>{const p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.42:r;p.push([cx+rr*Math.cos(a),cy+rr*Math.sin(a)])}
+    doc.setFillColor(...RED);doc.lines(p.slice(1).map((q,i)=>[q[0]-p[i][0],q[1]-p[i][1]]),p[0][0],p[0][1],[1,1],'F',true)};
+  const used=[];Object.keys(st.chords).sort((a,b)=>order(a)-order(b)).forEach(k=>{const n=name(st.chords[k]);if(!used.includes(n))used.push(n)});
+  // cabecera
+  let y=MT;
+  star(ML+7,y+4,8);
+  font('times','bolditalic',30,INK);
+  const title=st.title||'Canción',tl=doc.splitTextToSize(title,maxW-24);
+  doc.text(tl,ML+24,y+12);y+=12+(tl.length-1)*32+16;
+  doc.setDrawColor(...RED);doc.setLineWidth(1.2);doc.line(ML,y,ML+56,y);
+  doc.setDrawColor(...RULE);doc.setLineWidth(.6);doc.line(ML+60,y,W-MR,y);y+=20;
+  font('helvetica','normal',9.5,GREY);
+  const key='Tono  ',kv=name(C(st.key.r,st.key.m==='minor'?'m':''));
+  doc.text(key,ML,y);let x=ML+tw(key,'helvetica','normal',9.5);
+  font('helvetica','bold',9.5,RED);doc.text(kv,x,y);x+=tw(kv,'helvetica','bold',9.5)+18;
+  if(used.length){font('helvetica','normal',9.5,GREY);doc.text('Acordes',x,y);x+=tw('Acordes','helvetica','normal',9.5)+8;
+    used.forEach(n=>{const w=tw(n,'helvetica','bold',9)+12;if(x+w>W-MR){x=ML+60;y+=20}
+      doc.setDrawColor(...RULE);doc.setFillColor(253,242,243);doc.roundedRect(x,y-10.5,w,15,7,7,'FD');
+      font('helvetica','bold',9,RED);doc.text(n,x+6,y);x+=w+5})}
+  y+=34;
+  // estrofas
+  const L=lines(),stz=[];let cur=null;
+  L.forEach((ws,l)=>{if(ws){if(!cur){cur=[];stz.push(cur)}cur.push(l)}else cur=null});
+  const layout=l=>{const rows=[];let row=[],xx=0;
+    L[l].forEach((w,i)=>{const c=st.chords[l+':'+i],cn=c?name(c):'';
+      const bw=Math.max(tw(w,'times','normal',LY),cn?tw(cn,'helvetica','bold',CH)+3:0);
+      if(xx>0&&xx+bw>maxW){rows.push(row);row=[];xx=0}
+      row.push({w,cn,x:xx});xx+=bw+gap});
+    if(row.length)rows.push(row);
+    return rows.map(r=>({items:r,h:(r.some(b=>b.cn)?chH:0)+lyH+lnGap}))};
+  const multi=stz.length>1;
+  stz.forEach((s,si)=>{
+    const rows=s.flatMap(layout),tot=rows.reduce((a,r)=>a+r.h,0);
+    if(si&&y+tot>H-MB&&tot<H-MT-MB){doc.addPage();y=MT}
+    if(multi){font('times','italic',13,RED);doc.text(String(si+1),ML-26,y+(rows[0].items.some(b=>b.cn)?chH:0)+lyH-5,{align:'right'});
+      doc.setDrawColor(...RULE);doc.setLineWidth(.6);doc.line(ML-14,y+2,ML-14,y+tot-lnGap)}
+    rows.forEach(r=>{
+      if(y+r.h>H-MB){doc.addPage();y=MT}
+      const hc=r.items.some(b=>b.cn);
+      r.items.forEach(b=>{
+        if(b.cn){font('helvetica','bold',CH,RED);doc.text(b.cn,ML+b.x,y+chH-4)}
+        font('times','normal',LY,INK);doc.text(b.w,ML+b.x,y+(hc?chH:0)+lyH-5)});
+      y+=r.h});
+    y+=stGap});
+  // pie
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);doc.setDrawColor(...RULE);doc.setLineWidth(.6);doc.line(ML,H-46,W-MR,H-46);
+    font('times','italic',9.5,GREY);doc.text(title,ML,H-32);
+    if(n>1){font('helvetica','normal',9,GREY);doc.text(i+' / '+n,W-MR,H-32,{align:'right'})}}
+  return doc;
+}
+$('pdf').addEventListener('click',async()=>{
+  if(!window.jspdf){toast('No se pudo cargar el generador de PDF');return}
+  if(!lines().some(Boolean)){toast('No hay letra que exportar');return}
+  const doc=buildPdf(),fn=((st.title||'cancion').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cancion')+'.pdf';
+  if(window.claude&&window.claude.use){
+    const d=await window.claude.use('downloads');
+    if(!d){toast('Aquí no se pueden descargar archivos');return}
+    try{await d.save({filename:fn,data:doc.output('blob')});toast('PDF guardado')}
+    catch(e){if(e&&e.code!=='declined')toast('No se pudo guardar el PDF')}
+  }else doc.save(fn);
+});
+
+render();
+}
+</script>
+</body>
+</html>
