@@ -6,6 +6,7 @@ import { parse, serialize } from '/shared/chordpro.js';
 import { formatChord, formatKey, parseChord, transportar } from '/shared/chords.js';
 import { reasignar, copiarAcordesATodas, textoDesdeEstrofas, estrofasDesdeTexto } from '/shared/letra.js';
 import { suggest } from '/shared/suggest.js';
+import { construirPdf } from '/shared/pdf.js';
 
 const $ = (id) => document.getElementById(id);
 const hoja = $('hoja');
@@ -336,6 +337,12 @@ $('btn-copiar').onclick = () => {
   if (!copiados) return aviso(MENSAJE_COPIA[motivo]);
   editar(() => { cancion.stanzas = tmp; });
   aviso(`${copiados} acordes copiados`);
+};
+
+$('btn-pdf').onclick = () => {
+  if (!window.jspdf) return aviso('No se pudo cargar el generador de PDF');
+  const doc = construirPdf(new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), cancion);
+  doc.save(`${slug}.pdf`);
 };
 
 $('titulo').addEventListener('input', () => {
