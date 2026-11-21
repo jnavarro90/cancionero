@@ -34,8 +34,17 @@
       <button class="boton" type="button" id="btn-copiar" title="Copia los acordes de la primera estrofa a las demás, en la misma palabra">Copiar acordes a todas las estrofas</button>
       <button class="boton" type="button" id="btn-deshacer">Deshacer</button>
       <button class="boton" type="button" id="btn-editar">Editar letra</button>
+      <button class="boton" type="button" id="btn-seleccionar" aria-pressed="false">Seleccionar para borrar</button>
       <button class="boton principal" type="button" id="btn-listo" hidden>Listo</button>
       <button class="boton principal" type="button" id="btn-pdf">Descargar PDF</button>
+    </div>
+
+    <div class="barra-sel" id="barra-sel" role="toolbar" aria-label="Selección" hidden>
+      <p id="sel-texto"></p>
+      <button class="boton" type="button" id="sel-todos">Marcar todos</button>
+      <button class="boton" type="button" id="sel-ninguno">Desmarcar</button>
+      <button class="boton principal" type="button" id="sel-borrar" disabled>Borrar</button>
+      <button class="boton" type="button" id="sel-fin">Terminar</button>
     </div>
 
     <section class="hoja" id="hoja" aria-label="Hoja de la canción"></section>
@@ -47,6 +56,27 @@
 
     <p class="pie-editor" id="pie"></p>
   </main>
+
+  <dialog id="dlg-pdf" aria-labelledby="pdf-titulo">
+    <h2 id="pdf-titulo">Vista previa del PDF</h2>
+    <div class="opciones-pdf">
+      <div class="grupo-pdf" role="group" aria-label="Qué priorizar al ajustar a una página">
+        <button class="boton" type="button" data-prio="letra" aria-pressed="true">Letra grande</button>
+        <button class="boton" type="button" data-prio="espacio" aria-pressed="false">Más espacio entre líneas</button>
+        <button class="boton" type="button" data-prio="normal" aria-pressed="false">Sin ajustar</button>
+      </div>
+      <div class="grupo-pdf" role="group" aria-label="Número de columnas">
+        <button class="boton" type="button" data-cols="1" aria-pressed="true">1 columna</button>
+        <button class="boton" type="button" data-cols="2" aria-pressed="false">2 columnas</button>
+      </div>
+    </div>
+    <iframe id="pdf-vista" title="Vista previa del PDF"></iframe>
+    <p class="ayuda" id="pdf-info" role="status" aria-live="polite"></p>
+    <div class="fila-botones">
+      <button class="boton" type="button" id="pdf-cancelar">Cancelar</button>
+      <button class="boton principal" type="button" id="pdf-descargar">Descargar</button>
+    </div>
+  </dialog>
 
   <script src="/vendor/jspdf.umd.min.js"></script>
   <script type="module" src="/js/editor.js"></script>

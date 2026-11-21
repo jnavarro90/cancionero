@@ -1,20 +1,22 @@
-// Diseño del PDF de una canción (SPEC.md §9, heredado de la v1.0).
+// Diseño del PDF de una canción (SPEC.md §9).
 // Dos pasos: planearPdf() calcula todo como lista de dibujos (puro, con tests);
 // dibujarPdf() los pinta con jsPDF en el navegador.
+// ajustarPdf() busca la letra y el espacio entre líneas que dejan la canción en una página.
 import { formatChord, formatKey, clave } from './chords.js';
 
-// Puntos. A4 vertical. Márgenes: izq 86, der 64, sup 64, inf 72.
+// Puntos. A4 vertical. Márgenes: izq 56, der 40, sup 36, inf 60.
 const ANCHO = 595.28;
 const ALTO = 841.89;
-const X0 = 86;
-const X1 = ANCHO - 64;
-const ARRIBA = 64;
-const FONDO = ALTO - 72;          // límite inferior del cuerpo
+const X0 = 56;
+const X1 = ANCHO - 40;
+const ARRIBA = 36;
+const FONDO = ALTO - 60;          // límite inferior del cuerpo
 const PIE_Y = ALTO - 46;          // línea del pie
 const ANCHO_FILA = X1 - X0;
-const ESPACIO = 5.5;              // entre palabras
-const GAP_ESTROFA = 22;
-const PAD_FILA = 6;
+const ESPACIO = 5.5;              // entre palabras (escala con la letra)
+const GAP_ESTROFA = 22;           // entre estrofas (escala con el espacio entre líneas)
+const PAD_FILA = 6;               // entre filas (escala con el espacio entre líneas)
+const GUTTER = 34;                // entre columnas
 
 const ROJO = [190, 30, 48];
 const TINTA = [28, 28, 34];
@@ -22,6 +24,7 @@ const GRIS = [140, 140, 150];
 const LINEA = [225, 205, 208];
 const RELLENO = [253, 242, 243];
 
+// Fuentes: [familia, estilo, tamaño base]. La letra y los acordes escalan con «letra».
 const F_LETRA = ['times', 'normal', 14];
 const F_ACORDE = ['helvetica', 'bold', 11];
 const F_TITULO = ['times', 'bolditalic', 30];
@@ -60,6 +63,9 @@ function escribir(pag, s, x, y, f, c, medir) {
   return x + medir(s, f);
 }
 
+// Fuente con la letra escalada.
+const escalar = (f, s) => [f[0], f[1], f[2] * s];
+
 // Estrella de 5 puntas (radio 8, interior 42 %), en coordenadas absolutas.
 function estrella(cx, cy, R = 8) {
   const pts = [];
@@ -83,7 +89,7 @@ function acordesUsados(cancion) {
   return lista;
 }
 
-// Cabecera de la primera página. Devuelve la y donde empieza el cuerpo.
+// Cabecera de la primera página (tamaño fijo). Devuelve la y donde empieza el cuerpo.
 function cabecera(pag, cancion, medir) {
   const xT = X0 + 16 + 24;                                       // 24 pt de la estrella
   const lineasT = partir(cancion.title, X1 - xT, F_TITULO, medir);
@@ -96,7 +102,7 @@ function cabecera(pag, cancion, medir) {
 
   const yD = yReg + 18;
   let x = escribir(pag, 'Tono', X0, yD, F_ETIQUETA, GRIS, medir) + 6;
-  x = escribir(pag, formatKey(cancion.key, 'es'), x, yD, F_TONO, ROJO, medir);
+  x = escribir(pag, latin1(formatKey(cancion.key, 'es')), x, yD, F_TONO, ROJO, medir);
 
   const usados = acordesUsados(cancion);
   let yUltima = yD;
@@ -113,48 +119,51 @@ function cabecera(pag, cancion, medir) {
   return yUltima + 6 + 22;
 }
 
-// Filas de una estrofa: cada fila es una lista de bloques palabra + acorde.
-function filasDeEstrofa(lineas, medir) {
+// Filas de una estrofa, con la letra escalada por `s` y el espacio por `p`.
+// Cada fila es una lista de bloques palabra + acorde, con x relativa a la columna.
+function filasDeEstrofa(lineas, medir, s, p, anchoCol) {
+  const fLetra = escalar(F_LETRA, s);
+  const fAcorde = escalar(F_ACORDE, s);
   const filas = [];
   for (const linea of lineas) {
-    const bloques = linea.map((p) => {
-      const acorde = p.chord ? latin1(formatChord(p.chord, 'es')) : null;
-      const palabra = latin1(p.text);
-      const ancho = Math.max(medir(palabra, F_LETRA), acorde ? medir(acorde, F_ACORDE) + 3 : 0);
+    const bloques = linea.map((pt) => {
+      const acorde = pt.chord ? latin1(formatChord(pt.chord, 'es')) : null;
+      const palabra = latin1(pt.text);
+      const ancho = Math.max(medir(palabra, fLetra), acorde ? medir(acorde, fAcorde) + 3 * s : 0);
       return { palabra, acorde, ancho };
     });
     let fila = [];
     let ancho = 0;
     for (const b of bloques) {
-      const sep = fila.length ? ESPACIO : 0;
-      if (fila.length && ancho + sep + b.ancho > ANCHO_FILA) {
+      if (fila.length && ancho + ESPACIO * s + b.ancho > anchoCol) {
         filas.push(fila);
         fila = [];
         ancho = 0;
       }
-      ancho += (fila.length ? ESPACIO : 0) + b.ancho;
+      ancho += (fila.length ? ESPACIO * s : 0) + b.ancho;
       fila.push(b);
     }
     if (fila.length) filas.push(fila);
   }
   return filas.map((bloques) => {
     const conAcorde = bloques.some((b) => b.acorde);
-    let x = X0;
+    let x = 0;
     const pos = bloques.map((b) => {
-      const p = { ...b, x };
-      x += b.ancho + ESPACIO;
-      return p;
+      const pb = { ...b, x };
+      x += b.ancho + ESPACIO * s;
+      return pb;
     });
-    return { bloques: pos, conAcorde, alto: (conAcorde ? 15 : 0) + 19 + PAD_FILA };
+    return { bloques: pos, conAcorde, alto: (conAcorde ? 15 * s : 0) + 19 * s + PAD_FILA * p, s };
   });
 }
 
-// Dibuja una fila en la página. `top` es la y de la fila.
-function colocarFila(pag, fila, top) {
-  const base = top + (fila.conAcorde ? 15 : 0) + 14;     // línea de letra
+// Dibuja una fila en la página. `top` es la y de la fila; `x0` la de la columna.
+function colocarFila(pag, fila, top, x0) {
+  const s = fila.s;
+  const base = top + (fila.conAcorde ? 15 * s : 0) + 14 * s;     // línea de letra
   for (const b of fila.bloques) {
-    pag.push(texto(b.palabra, b.x, base, F_LETRA, TINTA));
-    if (b.acorde) pag.push(texto(b.acorde, b.x, top + 11, F_ACORDE, ROJO));
+    pag.push(texto(b.palabra, x0 + b.x, base, escalar(F_LETRA, s), TINTA));
+    if (b.acorde) pag.push(texto(b.acorde, x0 + b.x, top + 11 * s, escalar(F_ACORDE, s), ROJO));
   }
 }
 
@@ -169,38 +178,55 @@ function pie(pag, titulo, numero, total, medir) {
 }
 
 // Calcula las páginas. medir(texto, [familia, estilo, tamaño]) -> ancho en puntos.
+// opciones: { letra, espacio, columnas } (todas 1 por defecto).
+//   letra: escala de letra y acordes. espacio: escala del espacio entre líneas y estrofas.
+//   columnas: 1 o 2 para las estrofas. La cabecera siempre ocupa todo el ancho.
 // Devuelve un array de páginas; cada página, una lista de dibujos.
-export function planearPdf(cancion, medir) {
+export function planearPdf(cancion, medir, { letra = 1, espacio = 1, columnas = 1 } = {}) {
+  const s = letra;
+  const p = espacio;
+  const colW = (ANCHO_FILA - GUTTER * (columnas - 1)) / columnas;
   const paginas = [[]];
   let pag = paginas[0];
-  const nueva = () => { pag = []; paginas.push(pag); return ARRIBA; };
   const multi = cancion.stanzas.length > 1;
 
   let y = cabecera(pag, cancion, medir);
+  let colTop = y;                                       // y donde empiezan las columnas en esta página
+  let col = 0;
+  const x0 = () => X0 + col * (colW + GUTTER);
+  // Pasa a la siguiente columna; si no hay, a una página nueva.
+  const siguiente = () => {
+    if (col < columnas - 1) { col++; y = colTop; return; }
+    pag = [];
+    paginas.push(pag);
+    col = 0;
+    colTop = ARRIBA;
+    y = ARRIBA;
+  };
 
   cancion.stanzas.forEach((estrofa, ei) => {
-    const filas = filasDeEstrofa(estrofa.lines, medir);
+    const filas = filasDeEstrofa(estrofa.lines, medir, s, p, colW);
     if (!filas.length) return;
-    const alto = filas.reduce((s, f) => s + f.alto, 0);
+    const alto = filas.reduce((t, f) => t + f.alto, 0);
 
-    if (ei > 0) y += GAP_ESTROFA - PAD_FILA;              // la fila ya aporta 6
-    // Una estrofa que cabe entera en una página no se parte.
-    if (y + alto > FONDO && alto <= FONDO - ARRIBA) y = nueva();
+    if (ei > 0) y += (GAP_ESTROFA - PAD_FILA) * p;      // la fila ya aporta su PAD
+    // Una estrofa que cabe entera en una columna o página nueva no se parte.
+    if (y + alto > FONDO && alto <= FONDO - colTop) siguiente();
 
     let inicio = y;
-    let numero = multi;                                   // el número va solo en la primera fila
+    let numero = multi;                                 // el número va solo en la primera fila
     const cerrar = (fin) => {
-      if (multi) pag.push(linea(X0 - 12, inicio, X0 - 12, fin, 0.6, LINEA));
+      if (multi) pag.push(linea(x0() - 12, inicio, x0() - 12, fin, 0.6, LINEA));
     };
     for (const fila of filas) {
       if (y + fila.alto > FONDO) {
         cerrar(y);
-        y = nueva();
+        siguiente();
         inicio = y;
       }
-      colocarFila(pag, fila, y);
+      colocarFila(pag, fila, y, x0());
       if (numero) {
-        pag.push(texto(String(ei + 1), X0 - 26, y + (fila.conAcorde ? 15 : 0) + 14, F_NUMERO, ROJO));
+        pag.push(texto(String(ei + 1), x0() - 26, y + (fila.conAcorde ? 15 * s : 0) + 14 * s, F_NUMERO, ROJO));
         numero = false;
       }
       y += fila.alto;
@@ -208,8 +234,45 @@ export function planearPdf(cancion, medir) {
     cerrar(y);
   });
 
-  paginas.forEach((p, i) => pie(p, cancion.title, i + 1, paginas.length, medir));
+  paginas.forEach((pg, i) => pie(pg, cancion.title, i + 1, paginas.length, medir));
   return paginas;
+}
+
+// Mayor valor en [lo,hi] que cumple ok(); si ni lo cumple, devuelve lo.
+function mayorQueCabe(ok, lo, hi) {
+  if (ok(hi)) return hi;
+  if (!ok(lo)) return lo;
+  for (let i = 0; i < 12; i++) {
+    const m = (lo + hi) / 2;
+    if (ok(m)) lo = m; else hi = m;
+  }
+  return lo;
+}
+
+// Ajusta la canción a una página.
+//   'letra':   el espacio queda en 100 % y la letra crece lo que quepa; si no cabe, el espacio baja a 75 %.
+//   'espacio': la letra queda en 100 % y el espacio crece hasta 200 %; si no cabe, la letra baja.
+//   'normal':  tamaño de siempre, sin ajustar (puede ocupar varias páginas).
+// Devuelve { opciones, paginas }.
+export function ajustarPdf(cancion, medir, prioridad = 'letra', columnas = 1) {
+  if (prioridad === 'normal') {
+    const opciones = { letra: 1, espacio: 1, columnas };
+    return { opciones, paginas: planearPdf(cancion, medir, opciones) };
+  }
+  const cabe = (letra, espacio) =>
+    planearPdf(cancion, medir, { letra, espacio, columnas }).length === 1;
+  let letra;
+  let espacio;
+  if (prioridad === 'espacio') {
+    espacio = mayorQueCabe((e) => cabe(1, e), 0.75, 2);
+    letra = mayorQueCabe((l) => cabe(l, espacio), 0.5, 1);
+  } else {
+    letra = mayorQueCabe((l) => cabe(l, 1), 0.5, 1.6);
+    espacio = cabe(letra, 1) ? 1 : 0.75;
+    if (espacio !== 1) letra = mayorQueCabe((l) => cabe(l, espacio), 0.5, 1.6);
+  }
+  const opciones = { letra, espacio, columnas };
+  return { opciones, paginas: planearPdf(cancion, medir, opciones) };
 }
 
 function dibujarOp(doc, o) {
@@ -252,8 +315,10 @@ function medidorJsPdf(doc) {
   };
 }
 
-// Punto de entrada del navegador: rellena un jsPDF con la canción.
-export function construirPdf(doc, cancion) {
-  dibujarPdf(doc, planearPdf(cancion, medidorJsPdf(doc)));
-  return doc;
+// Punto de entrada del navegador: ajusta la canción y rellena un jsPDF con ella.
+// Devuelve { doc, opciones, paginas } para que la vista previa muestre lo que se eligió.
+export function construirPdf(doc, cancion, { prioridad = 'letra', columnas = 1 } = {}) {
+  const { opciones, paginas } = ajustarPdf(cancion, medidorJsPdf(doc), prioridad, columnas);
+  dibujarPdf(doc, paginas);
+  return { doc, opciones, paginas: paginas.length };
 }

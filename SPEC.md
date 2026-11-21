@@ -20,12 +20,12 @@ Donde este documento y `docs/prototipo.html` no coincidan, manda este documento.
 6. Subir o bajar el tono de toda la canción (acordes y tono a la vez).
 7. Exportar a PDF.
 8. Deshacer un paso (botón y Ctrl/Cmd + Z).
+9. Seleccionar acordes y borrarlos varios a la vez.
 
 ### 1.2 Fuera de la versión 1
 
 Esta lista manda. Cualquier cosa que aparezca aquí no se construye aunque el prototipo la tenga.
 
-- Modo de selección múltiple para borrar acordes. Se borra acorde a acorde.
 - Copiar la letra con acordes como texto.
 - Importar archivos `.chordpro`, `.cho` o `.txt`.
 - Cambiar la notación de pantalla (LAm / Am). La pantalla usa siempre notación española.
@@ -187,7 +187,10 @@ La pantalla tiene dos modos. El cambio entre ellos es explícito, con una sola a
 - **Tono:** `−` y `+` alrededor del tono actual (por ejemplo `LAm`). Cada clic baja o sube un semitono.
 - **«Copiar acordes a todas las estrofas»**, con el tooltip «Copia los acordes de la primera estrofa a las demás, en la misma palabra».
 - **Deshacer** (también con Ctrl/Cmd + Z)
+- **«Seleccionar para borrar»**, que activa el modo selección
 - **«Descargar PDF»** (botón rojo, el principal)
+
+**Modo selección.** Una barra oscura sustituye a la del tono con: «Marcar todos», «Desmarcar», **«Borrar N acordes»** (rojo, desactivado si no hay ninguno marcado) y «Terminar». Un clic en una palabra con acorde la marca o desmarca. Mayús + clic marca el tramo desde la última palabra marcada. Las palabras sin acorde no se marcan. Borrar quita los acordes marcados en un solo paso, que se puede deshacer. Salir del modo no borra nada, y las marcas se pierden.
 
 **Modo letra.** Cuadro de texto grande. Un único botón visible: **«Listo»** (rojo). Al pulsarlo se guarda y se vuelve a la hoja. Los acordes se recolocan según 3.1. Hay un aviso con el número de estrofas.
 
@@ -259,6 +262,10 @@ Sin cambios respecto a la sección 9 de la especificación anterior: A4 vertical
 
 Caracteres fuera de Latin-1 se sustituyen por `?` sin fallar.
 
+**Una sola página.** La canción ocupa una única hoja A4 con la letra lo más grande posible: se busca la mayor escala (entre 50 % y 160 %) que quepa. Los márgenes son fijos y mínimos (56/40/36/60 pt). La vista previa tiene tres opciones: «Letra grande» (la letra crece lo que quepa, con el espacio entre líneas normal; si no cabe, el espacio baja a 75 %), «Más espacio entre líneas» (la letra queda normal y el espacio crece hasta 200 %; si no cabe, la letra baja) y «Sin ajustar» (tamaño normal, puede ocupar varias páginas). Un segundo selector elige 1 o 2 columnas para las estrofas; la cabecera ocupa siempre todo el ancho y las estrofas pasan a la segunda columna antes de cambiar de página. La vista previa muestra los porcentajes resultantes. Si ni al 50 % cabe, se divide en varias páginas (con número de página) y la vista previa lo indica.
+
+**Vista previa.** «Descargar PDF» abre una vista previa con el selector de prioridad descrito arriba. La fila de acordes, los números de estrofa y el pie se muestran siempre. «Descargar» guarda el PDF de la vista previa.
+
 ---
 
 ## 10. Accesibilidad
@@ -323,7 +330,7 @@ No se incluyen letras con derechos de autor en el repositorio. `canciones/` est�
 
 1. Los acordes se guardan unidos a su palabra, no por posición. Así se corrige el desplazamiento al editar la letra.
 2. Un único control de tono que transporta acordes y tono a la vez.
-3. Fuera de la versión 1: selección múltiple, copiar como texto, importación, notación de pantalla en inglés, historial de 80 pasos, renombrar archivo y edición de archivos a mano.
+3. Fuera de la versión 1: copiar como texto, importación, notación de pantalla en inglés, historial de 80 pasos, renombrar archivo y edición de archivos a mano.
 4. Se conserva la papelera y se documenta cómo restaurar.
 5. El prototipo deja de ser vinculante donde contradiga este documento.
 6. Pendiente: si «Duplicar» hace falta de verdad y si la importación de `.txt` vuelve en una versión posterior.

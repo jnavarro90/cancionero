@@ -7,6 +7,7 @@ import { formatChord, formatKey, parseChord, transportar } from '/shared/chords.
 import { reasignar, copiarAcordesATodas, textoDesdeEstrofas, estrofasDesdeTexto } from '/shared/letra.js';
 import { suggest } from '/shared/suggest.js';
 import { construirPdf } from '/shared/pdf.js';
+import { rangoEntre } from '/shared/seleccion.js';
 
 const $ = (id) => document.getElementById(id);
 const hoja = $('hoja');
@@ -23,6 +24,8 @@ let guardando = false;
 let enConflicto = false;
 let datosConflicto = null;
 let tmr = null;           // temporizador del guardado automático
+let seleccion = null;     // Set de posiciones marcadas para borrar; null si no está en modo selección
+let ultimaMarcada = null; // última posición marcada, para Mayús + clic
 
 const MENSAJE_COPIA = {
   'una-estrofa': 'Solo hay una estrofa. Deja una línea en blanco entre estrofas en «Editar letra»',
@@ -40,6 +43,12 @@ function el(tag, clase, texto) {
 function celda(pos) {
   const [ei, li, wi] = pos.split(',').map(Number);
   return cancion.stanzas[ei].lines[li][wi];
+}
+
+// Como celda(), pero sin error si la posición ya no existe (p. ej. tras editar la letra).
+function celdaSegura(pos) {
+  const [ei, li, wi] = pos.split(',').map(Number);
+  return cancion.stanzas[ei]?.lines[li]?.[wi] ?? null;
 }
 
 function esCampo(nodo) {
@@ -64,6 +73,10 @@ function pintar(enfocar = null) {
     ? estrofas
     : [el('p', 'vacio', 'Aún no hay letra. Pulsa «Editar letra» para escribirla.')]));
   if (enfocar) hoja.querySelector(`[data-pos="${enfocar}"]`)?.focus();
+  if (seleccion) {
+    for (const pos of seleccion) if (!celdaSegura(pos)?.chord) seleccion.delete(pos);
+    actualizarSeleccion();
+  }
 
   $('tono').textContent = formatKey(cancion.key, 'es');
   const n = cancion.stanzas.flatMap((e) => e.lines.flat()).filter((p) => p.chord).length;
@@ -114,9 +127,71 @@ function cambiarTono(n) {
   });
 }
 
+// ---------- Modo selección (SPEC §7.2) ----------
+
+function posConAcorde() {
+  const out = [];
+  cancion.stanzas.forEach((e, ei) => e.lines.forEach((l, li) => l.forEach((p, wi) => {
+    if (p.chord) out.push(`${ei},${li},${wi}`);
+  })));
+  return out;
+}
+
+function actualizarSeleccion() {
+  const n = seleccion.size;
+  const plural = n === 1 ? '' : 's';
+  $('sel-texto').textContent = n
+    ? `${n} acorde${plural} marcado${plural}`
+    : 'Pulsa sobre los acordes que quieras borrar. Mayús + clic marca un tramo.';
+  $('sel-borrar').disabled = !n;
+  $('sel-borrar').textContent = n ? `Borrar ${n} acorde${plural}` : 'Borrar';
+  hoja.querySelectorAll('.palabra').forEach((b) => b.classList.toggle('marcada', seleccion.has(b.dataset.pos)));
+}
+
+function entrarSeleccion() {
+  cerrarPopover(false);
+  seleccion = new Set();
+  ultimaMarcada = null;
+  hoja.classList.add('seleccion');
+  $('barra-sel').hidden = false;
+  $('btn-seleccionar').setAttribute('aria-pressed', 'true');
+  actualizarSeleccion();
+}
+
+function salirSeleccion() {
+  if (!seleccion) return;
+  seleccion = null;
+  ultimaMarcada = null;
+  hoja.classList.remove('seleccion');
+  $('barra-sel').hidden = true;
+  $('btn-seleccionar').setAttribute('aria-pressed', 'false');
+  pintar();
+}
+
+function alternarMarca(pos, tramo) {
+  if (!celdaSegura(pos)?.chord) return;
+  if (tramo && ultimaMarcada) rangoEntre(posConAcorde(), ultimaMarcada, pos).forEach((p) => seleccion.add(p));
+  else if (seleccion.has(pos)) seleccion.delete(pos);
+  else seleccion.add(pos);
+  ultimaMarcada = pos;
+  actualizarSeleccion();
+}
+
+function borrarSeleccion() {
+  if (!seleccion?.size) return;
+  const n = seleccion.size;
+  editar(() => {
+    for (const pos of seleccion) celda(pos).chord = null;
+    seleccion.clear();
+  });
+  ultimaMarcada = null;
+  aviso(`${n} acorde${n === 1 ? '' : 's'} borrado${n === 1 ? '' : 's'} · puedes deshacer`);
+}
+
 // ---------- Selector de acorde (SPEC §7.4) ----------
 
 function abrirPopover(bEl) {
+  if (seleccion) return;
   cerrarPopover(false);
   const pos = bEl.dataset.pos;
   const [ei, li, wi] = pos.split(',').map(Number);
@@ -187,6 +262,7 @@ function cerrarPopover(conFoco) {
 
 function entrarLetra() {
   cerrarPopover(false);
+  salirSeleccion();
   modoLetra = true;
   hoja.hidden = true;
   $('ayuda').hidden = true;
@@ -284,7 +360,14 @@ function resolverConflicto(cargarDisco) {
 
 hoja.addEventListener('click', (e) => {
   const b = e.target.closest('.palabra');
-  if (b) abrirPopover(b);
+  if (!b) return;
+  if (seleccion) alternarMarca(b.dataset.pos, e.shiftKey);
+  else abrirPopover(b);
+});
+
+// Mayús + clic marca un tramo sin seleccionar texto de la hoja.
+hoja.addEventListener('mousedown', (e) => {
+  if (seleccion && e.shiftKey) e.preventDefault();
 });
 
 hoja.addEventListener('keydown', (e) => {
@@ -294,7 +377,11 @@ hoja.addEventListener('keydown', (e) => {
   const i = todas.indexOf(b);
   if (e.key === 'ArrowRight') { e.preventDefault(); todas[i + 1]?.focus(); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); todas[i - 1]?.focus(); }
-  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirPopover(b); }
+  else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    if (seleccion) alternarMarca(b.dataset.pos, e.shiftKey);
+    else abrirPopover(b);
+  }
   else if (e.key === 'Delete' || e.key === 'Backspace') {
     if (!celda(b.dataset.pos).chord) return;
     e.preventDefault();
@@ -308,6 +395,7 @@ document.addEventListener('mousedown', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (seleccion && e.key === 'Escape' && !esCampo(e.target)) { e.preventDefault(); salirSeleccion(); return; }
   if (popover) {
     if (e.key === 'Escape') { e.preventDefault(); cerrarPopover(true); return; }
     if (!esCampo(e.target) && /^[1-8]$/.test(e.key)) {
@@ -326,6 +414,11 @@ $('tono-bajar').onclick = () => cambiarTono(-1);
 $('tono-subir').onclick = () => cambiarTono(1);
 $('btn-deshacer').onclick = deshacerPaso;
 $('btn-editar').onclick = entrarLetra;
+$('btn-seleccionar').onclick = () => (seleccion ? salirSeleccion() : entrarSeleccion());
+$('sel-todos').onclick = () => { posConAcorde().forEach((p) => seleccion.add(p)); actualizarSeleccion(); };
+$('sel-ninguno').onclick = () => { seleccion.clear(); ultimaMarcada = null; actualizarSeleccion(); };
+$('sel-borrar').onclick = borrarSeleccion;
+$('sel-fin').onclick = salirSeleccion;
 $('btn-listo').onclick = salirLetra;
 $('letra').addEventListener('input', contarEstrofas);
 $('cargar-disco').onclick = () => resolverConflicto(true);
@@ -339,11 +432,56 @@ $('btn-copiar').onclick = () => {
   aviso(`${copiados} acordes copiados`);
 };
 
+// Vista previa del PDF: el ajuste lo calcula shared/pdf.js; aquí solo se muestra y se elige.
+const dlgPdf = $('dlg-pdf');
+let prioPdf = 'letra';
+let colsPdf = 1;
+let docPdf = null;
+let urlPdf = null;
+
+function vistaPdf() {
+  const r = construirPdf(new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), cancion,
+    { prioridad: prioPdf, columnas: colsPdf });
+  docPdf = r.doc;
+  if (urlPdf) URL.revokeObjectURL(urlPdf);
+  urlPdf = URL.createObjectURL(docPdf.output('blob'));
+  $('pdf-vista').src = urlPdf;
+  const { letra, espacio } = r.opciones;
+  $('pdf-info').textContent = `Letra ${Math.round(letra * 100)} % · espacio entre líneas ${Math.round(espacio * 100)} % · `
+    + (r.paginas === 1 ? 'cabe en una página.' : `no cabe ni con letra al 50 %: se dividirá en ${r.paginas} páginas.`);
+}
+
+function marcar(atributo, valor) {
+  document.querySelectorAll(`#dlg-pdf [${atributo}]`).forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.getAttribute(atributo) === valor));
+  });
+}
+
+document.querySelectorAll('#dlg-pdf [data-prio]').forEach((b) => b.onclick = () => {
+  prioPdf = b.dataset.prio;
+  marcar('data-prio', prioPdf);
+  vistaPdf();
+});
+document.querySelectorAll('#dlg-pdf [data-cols]').forEach((b) => b.onclick = () => {
+  colsPdf = Number(b.dataset.cols);
+  marcar('data-cols', String(colsPdf));
+  vistaPdf();
+});
+
 $('btn-pdf').onclick = () => {
   if (!window.jspdf) return aviso('No se pudo cargar el generador de PDF');
-  const doc = construirPdf(new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), cancion);
-  doc.save(`${slug}.pdf`);
+  vistaPdf();
+  dlgPdf.showModal();
 };
+$('pdf-cancelar').onclick = () => dlgPdf.close();
+$('pdf-descargar').onclick = () => {
+  docPdf.save(`${slug}.pdf`);
+  dlgPdf.close();
+};
+dlgPdf.addEventListener('close', () => {
+  if (urlPdf) { URL.revokeObjectURL(urlPdf); urlPdf = null; }
+  $('pdf-vista').src = 'about:blank';
+});
 
 $('titulo').addEventListener('input', () => {
   cancion.title = $('titulo').value;

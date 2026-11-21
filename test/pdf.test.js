@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { latin1, planearPdf } from '../shared/pdf.js';
+import { latin1, planearPdf, ajustarPdf } from '../shared/pdf.js';
 
 // Medidor falso: ancho proporcional al texto. Basta para probar la maquetación.
 const medir = (s, [, , tamano]) => s.length * tamano * 0.5;
@@ -58,4 +58,36 @@ test('una sola página no lleva numeración', () => {
 test('el título con caracteres fuera de Latin-1 llega sustituido', () => {
   const paginas = planearPdf(cancionCon([estrofaDeLineas(1)], 'Paz 😀'), medir);
   assert.ok(textos(paginas).flat().some((s) => s === 'Paz ?'));
+});
+
+test('ajustar con «letra»: una canción corta crece la letra y cabe en una página', () => {
+  const r = ajustarPdf(cancionCon([estrofaDeLineas(3)]), medir, 'letra');
+  assert.equal(r.paginas.length, 1);
+  assert.ok(r.opciones.letra > 1);
+  assert.equal(r.opciones.espacio, 1);
+});
+
+test('ajustar con «letra»: una canción larga reduce la letra hasta caber', () => {
+  const r = ajustarPdf(cancionCon([estrofaDeLineas(30)]), medir, 'letra');
+  assert.equal(r.paginas.length, 1);
+  assert.ok(r.opciones.letra < 1);
+});
+
+test('ajustar con «espacio»: la letra queda en 100 % y el espacio crece', () => {
+  const r = ajustarPdf(cancionCon([estrofaDeLineas(3)]), medir, 'espacio');
+  assert.equal(r.opciones.letra, 1);
+  assert.ok(r.opciones.espacio > 1);
+  assert.equal(r.paginas.length, 1);
+});
+
+test('«sin ajustar» usa el tamaño normal aunque se divida en páginas', () => {
+  const r = ajustarPdf(cancionCon([estrofaDeLineas(40)]), medir, 'normal');
+  assert.deepEqual([r.opciones.letra, r.opciones.espacio], [1, 1]);
+  assert.ok(r.paginas.length >= 2);
+});
+
+test('dos columnas caben en menos páginas que una', () => {
+  const c = cancionCon([estrofaDeLineas(40)]);
+  assert.equal(planearPdf(c, medir).length, 2);
+  assert.equal(planearPdf(c, medir, { columnas: 2 }).length, 1);
 });
